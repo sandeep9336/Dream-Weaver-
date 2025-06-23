@@ -50,15 +50,16 @@
       color: #718096;
       font-size: 0.875rem;
     }
+    .history-item:hover {
+        background-color: #374151; /* gray-700 */
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-white flex flex-col min-h-screen">
   <header class="bg-gray-800 shadow-lg w-full sticky top-0 z-40">
-    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
       <h1 class="text-2xl md:text-3xl font-bold text-white">Dream Weaver AI</h1>
-      <nav class="flex space-x-2">
-        <a href="#" class="bg-blue-600 hover:bg-blue-700 text-sm px-3 py-1 rounded text-white">Login / Sign Up</a>
-      </nav>
+       <a href="#" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">Login / Sign Up</a>
     </div>
   </header>
 
@@ -96,6 +97,16 @@
 
           <button id="generateBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-800 shadow-lg">Generate Images</button>
         </div>
+        
+        <div class="w-full max-w-4xl mt-10 bg-gray-800 rounded-2xl shadow-xl p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Generation History</h2>
+                <button id="clearHistoryBtn" class="text-sm bg-red-600 hover:bg-red-700 text-white font-semibold py-1 px-3 rounded-md transition-colors">Clear History</button>
+            </div>
+            <div id="historyList" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                <p id="historyPlaceholder" class="text-gray-500 text-center py-4">Your recent generations will appear here.</p>
+            </div>
+        </div>
 
         <div class="w-full max-w-4xl my-6 text-center">
           <div class="ad-placeholder h-24">AdSense Leaderboard (728x90)</div>
@@ -106,22 +117,17 @@
           <p id="placeholder-text" class="text-gray-500 text-center">Your generated images will appear here.</p>
           <div id="image-grid" class="hidden w-full grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
         </div>
-
-        <div class="w-full max-w-4xl mt-10 bg-gray-800 rounded-2xl shadow-xl p-6">
-          <h2 class="text-xl font-bold mb-4">Generated History</h2>
-          <div id="historyList" class="space-y-2 text-gray-300">
-            <p class="text-sm">No history yet. Your previously generated prompts will appear here.</p>
-          </div>
-        </div>
-
+        
         <div class="w-full max-w-4xl mt-10 bg-gray-800 rounded-2xl shadow-xl p-6">
           <h2 class="text-xl font-bold mb-4">Leave a Comment</h2>
           <form id="commentForm" class="space-y-4">
-            <input type="text" placeholder="Your Name" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white" required />
-            <textarea placeholder="Your Comment" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white" rows="4" required></textarea>
+            <input id="commentName" type="text" placeholder="Your Name" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white" required />
+            <textarea id="commentText" placeholder="Your Comment" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white" rows="4" required></textarea>
             <button type="submit" class="bg-green-600 hover:bg-green-700 px-5 py-2 rounded text-white font-semibold">Post Comment</button>
           </form>
-          <div id="commentList" class="mt-6 space-y-4"></div>
+          <div id="commentList" class="mt-6 space-y-4">
+             <p id="commentPlaceholder" class="text-gray-500 text-center py-4">Be the first to leave a comment!</p>
+          </div>
         </div>
       </main>
 
@@ -132,50 +138,236 @@
       </aside>
     </div>
   </div>
+  
+    <!-- Modal for Error Messages -->
+    <div id="error-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50"><div class="bg-red-800 text-white p-6 rounded-lg shadow-xl max-w-sm mx-auto"><h3 class="text-xl font-bold mb-2">Error</h3><p id="error-message"></p><button id="close-modal-btn" class="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Close</button></div></div>
+
 
   <footer class="bg-gray-800 w-full mt-auto">
     <div class="container mx-auto px-4 py-4 text-center text-gray-400">
       &copy; 2025 Dream Weaver AI. All rights reserved.
       <div class="mt-2 flex justify-center space-x-3">
-        <a href="/about.html" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded">About</a>
-        <a href="/privacy-policy.html" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded">Privacy & Policy</a>
+        <a href="#" class="text-xs hover:text-white transition-colors">About</a>
+        <a href="#" class="text-xs hover:text-white transition-colors">Privacy & Policy</a>
       </div>
     </div>
   </footer>
 
-  <script>
-    const historyList = document.getElementById('historyList');
+  <script type="module">
+    // --- DOM Elements ---
     const generateBtn = document.getElementById('generateBtn');
-    const promptInput = document.getElementById('prompt');
-
-    generateBtn.addEventListener('click', function () {
-      const promptText = promptInput.value.trim();
-      if (promptText) {
-        const item = document.createElement('p');
-        item.className = 'text-sm text-gray-400';
-        const imgUrl = 'https://via.placeholder.com/150';
-        item.innerHTML = `<strong>Prompt:</strong> ${promptText}<br/><img src="${imgUrl}" alt="Generated image" class="mt-2 rounded w-32 h-32 object-cover" />`;
-        historyList.prepend(item);
-      }
-    });
-
+    const promptTextarea = document.getElementById('prompt');
+    const imageCountSelect = document.getElementById('imageCount');
+    const loader = document.getElementById('loader');
+    const placeholderText = document.getElementById('placeholder-text');
+    const imageGrid = document.getElementById('image-grid');
+    // History
+    const historyList = document.getElementById('historyList');
+    const historyPlaceholder = document.getElementById('historyPlaceholder');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    // Comments
     const commentForm = document.getElementById('commentForm');
+    const commentNameInput = document.getElementById('commentName');
+    const commentTextInput = document.getElementById('commentText');
     const commentList = document.getElementById('commentList');
+    const commentPlaceholder = document.getElementById('commentPlaceholder');
+    // Modal
+    const errorModal = document.getElementById('error-modal');
+    const errorMessageElem = document.getElementById('error-message');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    
+    const MAX_HISTORY_ITEMS = 15;
 
-    commentForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const inputs = commentForm.querySelectorAll('input, textarea');
-      const name = inputs[0].value.trim();
-      const comment = inputs[1].value.trim();
-
-      if (name && comment) {
-        const commentBlock = document.createElement('div');
-        commentBlock.className = 'bg-gray-700 p-4 rounded shadow';
-        commentBlock.innerHTML = `<p class='font-semibold text-green-400'>${name}</p><p class='text-gray-300 mt-1'>${comment}</p>`;
-        commentList.prepend(commentBlock);
-        commentForm.reset();
-      }
+    // --- Event Listeners ---
+    document.addEventListener('DOMContentLoaded', () => {
+        loadHistory();
+        loadComments();
     });
+    generateBtn.addEventListener('click', handleImageGeneration);
+    clearHistoryBtn.addEventListener('click', handleClearHistory);
+    commentForm.addEventListener('submit', handleCommentSubmit);
+    closeModalBtn.addEventListener('click', () => errorModal.classList.add('hidden'));
+
+    imageGrid.addEventListener('click', (event) => {
+        if (event.target.classList.contains('download-btn')) {
+            const imageUrl = event.target.dataset.imageUrl;
+            if (!imageUrl) return showError("Image data not found.");
+            
+            const a = document.createElement('a');
+            a.href = imageUrl;
+            a.download = `dreamweaver-ai-${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    });
+
+    historyList.addEventListener('click', (event) => {
+        const historyItem = event.target.closest('.history-item');
+        if (historyItem) {
+            promptTextarea.value = historyItem.dataset.prompt;
+        }
+    });
+
+    // --- Core Functions ---
+    async function handleImageGeneration() {
+        const prompt = promptTextarea.value.trim();
+        if (!prompt) return showError('Please enter a description for the image.');
+
+        setLoadingState(true);
+
+        try {
+            const selectedRatio = document.querySelector('input[name="aspect_ratio"]:checked').value;
+            const sampleCount = parseInt(imageCountSelect.value, 10);
+            const payload = {
+                instances: [{ prompt }],
+                parameters: { "sampleCount": sampleCount, "aspectRatio": selectedRatio }
+            };
+
+            const apiKey = ""; // Injected by environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            if (!result.predictions || result.predictions.length === 0) {
+                throw new Error('API returned a successful response, but no images were found.');
+            }
+            
+            const imageSrcs = result.predictions.map(p => `data:image/png;base64,${p.bytesBase64Encoded}`);
+            
+            imageGrid.innerHTML = ''; // Clear previous images
+            imageSrcs.forEach(src => createImageCard(src));
+            imageGrid.classList.remove('hidden');
+            
+            saveToHistory(prompt, imageSrcs[0]);
+        } catch (error) {
+            console.error("Error during image generation:", error);
+            showError(`An error occurred: ${error.message}. Please try again later.`);
+            placeholderText.classList.remove('hidden');
+        } finally {
+            setLoadingState(false);
+        }
+    }
+    
+    function setLoadingState(isLoading) {
+        generateBtn.disabled = isLoading;
+        generateBtn.textContent = isLoading ? 'Generating...' : 'Generate Images';
+        if (isLoading) {
+            loader.classList.remove('hidden');
+            placeholderText.classList.add('hidden');
+            imageGrid.classList.add('hidden');
+        } else {
+            loader.classList.add('hidden');
+        }
+    }
+
+    function createImageCard(imageUrl) {
+        const card = document.createElement('div');
+        card.className = 'relative group bg-gray-700 rounded-lg overflow-hidden aspect-square';
+        
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.alt = "Generated AI Image";
+        img.className = "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105";
+        
+        const downloadButton = document.createElement('button');
+        downloadButton.textContent = 'Download';
+        downloadButton.className = 'download-btn absolute bottom-2 right-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300';
+        downloadButton.dataset.imageUrl = imageUrl;
+        
+        card.appendChild(img);
+        card.appendChild(downloadButton);
+        imageGrid.appendChild(card);
+    }
+
+    function showError(message) {
+        errorMessageElem.textContent = message;
+        errorModal.classList.remove('hidden');
+    }
+
+    // --- History Functions ---
+    function getHistory() { return JSON.parse(localStorage.getItem('aiImageHistory') || '[]'); }
+    function saveToHistory(prompt, thumbnail) {
+        let history = getHistory();
+        history.unshift({ prompt, thumbnail, date: new Date().toISOString() });
+        if (history.length > MAX_HISTORY_ITEMS) history = history.slice(0, MAX_HISTORY_ITEMS);
+        localStorage.setItem('aiImageHistory', JSON.stringify(history));
+        loadHistory();
+    }
+    function loadHistory() {
+        const history = getHistory();
+        historyList.innerHTML = '';
+        if (history.length === 0) {
+            historyPlaceholder.style.display = 'block';
+        } else {
+            historyPlaceholder.style.display = 'none';
+            history.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'history-item flex items-center gap-4 p-2 rounded-lg cursor-pointer';
+                card.dataset.prompt = item.prompt;
+                card.innerHTML = `
+                    <img src="${item.thumbnail}" alt="History thumbnail" class="w-12 h-12 object-cover rounded-md bg-gray-600 flex-shrink-0">
+                    <p class="truncate text-sm text-gray-300">${item.prompt}</p>
+                `;
+                historyList.appendChild(card);
+            });
+        }
+    }
+    function handleClearHistory() {
+        localStorage.removeItem('aiImageHistory');
+        loadHistory();
+    }
+
+    // --- Comment Functions ---
+    function getComments() { return JSON.parse(localStorage.getItem('aiImageComments') || '[]'); }
+    function saveComments(comments) { localStorage.setItem('aiImageComments', JSON.stringify(comments)); }
+    function loadComments() {
+        const comments = getComments();
+        commentList.innerHTML = '';
+        if (comments.length === 0) {
+            commentPlaceholder.style.display = 'block';
+        } else {
+            commentPlaceholder.style.display = 'none';
+            comments.forEach(comment => {
+                const commentBlock = document.createElement('div');
+                commentBlock.className = 'bg-gray-700 p-4 rounded-lg shadow';
+                // Sanitize output to prevent XSS
+                const nameElem = document.createElement('p');
+                nameElem.className = 'font-semibold text-green-400';
+                nameElem.textContent = comment.name;
+                
+                const textElem = document.createElement('p');
+                textElem.className = 'text-gray-300 mt-1 break-words';
+                textElem.textContent = comment.text;
+
+                commentBlock.appendChild(nameElem);
+                commentBlock.appendChild(textElem);
+                commentList.appendChild(commentBlock);
+            });
+        }
+    }
+    function handleCommentSubmit(e) {
+        e.preventDefault();
+        const name = commentNameInput.value.trim();
+        const text = commentTextInput.value.trim();
+        if (name && text) {
+            let comments = getComments();
+            comments.unshift({ name, text });
+            saveComments(comments);
+            loadComments();
+            commentForm.reset();
+        }
+    }
   </script>
 </body>
 </html>
